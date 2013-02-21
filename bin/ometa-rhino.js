@@ -1,5 +1,7 @@
 var ometaloc = arguments[0]
 
+ometaloc+= "lib/"
+
 load(ometaloc + "lib.js")
 load(ometaloc + "ometa-base.js")
 load(ometaloc + "parser.js")
