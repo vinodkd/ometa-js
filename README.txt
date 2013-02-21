@@ -1,3 +1,19 @@
+My fork of Alex Warth's OMetaJS intends to:
+  - Arrange the files a bit more logically; move docs to a docs folder and so forth
+  - Make generic "launchers". The default launchers (like ometa-rhino) are not generic enough.
+  - Add in the Grammars from the website's projects directory for easy reference
+  - Make distributable versions of OMetaJS for:
+     - Rhino
+     - node (if existing forks/efforts are not usable)
+     - v8 (if I find use for such a version)
+  
+I looked at the current forks on github before deciding to fork the original. In particular, veged's fork was very interesting in that the directory moves were already done and tests were added. Unfortunately, however, he's also refactored a lot of code which I was not sure I wanted to take on.
+
+My fork is primarily to make OMetaJS easier to use; not necessarily easier to develop/modify.
+
+Alex's original readme continues below.
+=========================================================================== 
+
 The following files contain some important info:
 
 * Not_Quite_JS.txt explains the difference between "real" JavaScript and
