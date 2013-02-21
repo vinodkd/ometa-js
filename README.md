@@ -35,7 +35,7 @@ Status
 	- `lib`: containing the original source. In typical scripting language fashion the source code is contained in `lib`
 	- `src`: containing the original v8 plugin source
 - Added a `samples` directory and copied over sample grammars from the tinlizzie site for reference
-- Created a launcher for Rhino. This requires setting 3 shell variables:
+- Created a generic launcher that uses Rhino as a default. This requires setting 3 shell variables:
 	- `$RHINO_INSTALL_DIR`: Where Rhino is installed
 	- `$OMETAJS_INSTALL_DIR`: Where OMetaJS is installed
 	- `$OMETAJS_RUNTIME`: Which denotes the JS runtime to use. Currently supports only `rhino`, but will support `v8` and `node` eventually.
