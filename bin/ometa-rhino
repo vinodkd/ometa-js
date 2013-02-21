@@ -1,0 +1,8 @@
+echo betterscript parser/compiler running...
+if [ "$INSTALL_DIR" == "" ]
+then
+	echo Need the location of OmetaJS to continue.
+	echo Install OmetaJS and set \$INSTALL_DIR to its parent dir \(excluding the /ometa-js/ part\) before running again
+	exit -1
+fi
+java -cp js.jar org.mozilla.javascript.tools.shell.Main ometa-rhino.js "$INSTALL_DIR/ometa-js/" bs.ometa bsc.ometa $1
