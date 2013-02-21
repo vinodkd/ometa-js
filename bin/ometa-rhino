@@ -1,6 +1,5 @@
 #! /usr/bin/env bash
 
-echo ometa-rhino starting...
 if [ "$RHINO_INSTALL_DIR" == "" ]
 then
 	echo Need the location of Rhino Installation to continue.
@@ -15,10 +14,10 @@ then
 	exit -1
 fi
 
-if [ $# -ne 2  ]
+if [ $# -ne 3  ]
 then
-	echo Usage: $0 grammar.ometajs sourcefile
+	echo Usage: $0 grammar.ometajs rule sourcefile
 	exit -2
 fi
 
-java -cp $RHINO_INSTALL_DIR/js.jar org.mozilla.javascript.tools.shell.Main ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@
+java -cp $RHINO_INSTALL_DIR/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_INSTALL_DIR/bin/ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@
