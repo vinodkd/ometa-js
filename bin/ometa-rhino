@@ -7,17 +7,4 @@ then
 	exit -1
 fi
 
-if [ "$OMETAJS_INSTALL_DIR" == "" ]
-then
-	echo Need the location of OmetaJS Installation to continue.
-	echo Set \$OMETAJS_INSTALL_DIR to that location \(minus the trailing slash\).
-	exit -1
-fi
-
-if [ $# -ne 3  ]
-then
-	echo Usage: $0 grammar.ometajs rule sourcefile
-	exit -2
-fi
-
 java -cp $RHINO_INSTALL_DIR/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_INSTALL_DIR/bin/ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@
