@@ -1,14 +1,14 @@
-var ometaloc = arguments[0]
+var ometaloc = arguments[0];
 
-ometaloc+= "lib/"
+ometalibs= ometaloc + "lib/";
 
-load(ometaloc + "lib.js")
-load(ometaloc + "ometa-base.js")
-load(ometaloc + "parser.js")
-load(ometaloc + "bs-js-compiler.js")
-load(ometaloc + "bs-ometa-compiler.js")
-load(ometaloc + "bs-ometa-optimizer.js")
-load(ometaloc + "bs-ometa-js-compiler.js")
+load(ometalibs + "lib.js");
+load(ometalibs + "ometa-base.js");
+load(ometalibs + "parser.js");
+load(ometalibs + "bs-js-compiler.js");
+load(ometalibs + "bs-ometa-compiler.js");
+load(ometalibs + "bs-ometa-optimizer.js");
+load(ometalibs + "bs-ometa-js-compiler.js");
 
 matchFailed = function (grammar, errorPos) {
   var lines = grammar.input.lst.split('\n');
@@ -43,17 +43,11 @@ translateCode = function(s) {
   return BSOMetaJSTranslator.match(tree, "trans", undefined, matchFailed)
 }
 var grammar  = readFile(arguments[1]);
-var compiler = readFile(arguments[2]);
+var rule     = arguments[2];
 var pgm      = readFile(arguments[3]);
 
-var langsrc = grammar + "\n" + compiler;
-var langtoolchain = translateCode(langsrc);
+var langtoolchain = translateCode(grammar);
 
-//print(compiledUnit);
 eval(langtoolchain);
-var ast = BSParser.matchAll(pgm,"compilationUnit");
-alert(ast);
-alert("ast done. now compiling\n");
-
-var code = BSCompiler.match(ast, "ast");
-alert(code);
+var tree = BSParser.matchAll(pgm,rule);
+alert(tree);
