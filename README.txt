@@ -1,7 +1,7 @@
 My fork of Alex Warth's OMetaJS intends to:
   - Arrange the files a bit more logically; move docs to a docs folder and so forth
   - Make generic "launchers". The default launchers (like ometa-rhino) are not generic enough.
-  - Add in the Grammars from the website's projects directory for easy reference
+  - Add in the Grammars from the website's projects directory for easy reference.Not all have been copied over, however; only those that I thought (from a brief look-see) would be relevant to using OMetaJS. Also, the files are a point-in-time snapshot and may not work in practice. As I try to use these grammars in creating my own, I might go back to the older versions if there are broken snapshots.
   - Make distributable versions of OMetaJS for:
      - Rhino
      - node (if existing forks/efforts are not usable)
