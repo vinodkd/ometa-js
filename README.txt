@@ -1,7 +1,7 @@
 My fork of Alex Warth's OMetaJS intends to:
   - Arrange the files a bit more logically; move docs to a docs folder and so forth
   - Make generic "launchers". The default launchers (like ometa-rhino) are not generic enough.
-  - Add in the Grammars from the website's projects directory for easy reference.Not all have been copied over, however; only those that I thought (from a brief look-see) would be relevant to using OMetaJS. Also, the files are a point-in-time snapshot and may not work in practice. As I try to use these grammars in creating my own, I might go back to the older versions if there are broken snapshots.
+  - Add in the Grammars from the website's projects directory for easy reference.
   - Make distributable versions of OMetaJS for:
      - Rhino
      - node (if existing forks/efforts are not usable)
@@ -10,6 +10,10 @@ My fork of Alex Warth's OMetaJS intends to:
 I looked at the current forks on github before deciding to fork the original. In particular, veged's fork was very interesting in that the directory moves were already done and tests were added. Unfortunately, however, he's also refactored a lot of code which I was not sure I wanted to take on.
 
 My fork is primarily to make OMetaJS easier to use; not necessarily to change OMetaJS itself.
+
+Caveats:
+  - I'm moving files first, adding grammars and making the rhino distro - in that order. Bits of the original OMetaJS codebase (like Worlds or the Workspace) might not work while I'm doing this.
+  - Not all grammars have been copied over; only those that I thought (from a brief look-see) would be relevant to using OMetaJS. Also, the files are a point-in-time snapshot and may not work in practice. As I try to use these grammars in creating my own, I might go back to the older versions if there are broken snapshots.
 
 Alex's original readme continues below.
 =========================================================================== 
