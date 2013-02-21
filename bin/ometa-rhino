@@ -1,8 +1,24 @@
-echo betterscript parser/compiler running...
-if [ "$INSTALL_DIR" == "" ]
+#! /usr/bin/env bash
+
+echo ometa-rhino starting...
+if [ "$RHINO_INSTALL_DIR" == "" ]
 then
-	echo Need the location of OmetaJS to continue.
-	echo Install OmetaJS and set \$INSTALL_DIR to its parent dir \(excluding the /ometa-js/ part\) before running again
+	echo Need the location of Rhino Installation to continue.
+	echo Install Rhino and set \$RHINO_INSTALL_DIR to that location
 	exit -1
 fi
-java -cp js.jar org.mozilla.javascript.tools.shell.Main ometa-rhino.js "$INSTALL_DIR/ometa-js/" bs.ometa bsc.ometa $1
+
+if [ "$OMETAJS_INSTALL_DIR" == "" ]
+then
+	echo Need the location of OmetaJS Installation to continue.
+	echo Set \$OMETAJS_INSTALL_DIR to that location \(minus the trailing slash\).
+	exit -1
+fi
+
+if [ $# -ne 2  ]
+then
+	echo Usage: $0 grammar.ometajs sourcefile
+	exit -2
+fi
+
+java -cp $RHINO_INSTALL_DIR/js.jar org.mozilla.javascript.tools.shell.Main ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@
