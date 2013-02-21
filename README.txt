@@ -9,7 +9,7 @@ My fork of Alex Warth's OMetaJS intends to:
   
 I looked at the current forks on github before deciding to fork the original. In particular, veged's fork was very interesting in that the directory moves were already done and tests were added. Unfortunately, however, he's also refactored a lot of code which I was not sure I wanted to take on.
 
-My fork is primarily to make OMetaJS easier to use; not necessarily easier to develop/modify.
+My fork is primarily to make OMetaJS easier to use; not necessarily to change OMetaJS itself.
 
 Alex's original readme continues below.
 =========================================================================== 
