@@ -1,0 +1,64 @@
+// load up the Canvas project, then clear the stuff that it draws
+eval(readFile("Canvas"))
+theScheduler.schedule(function() { ctxt.clearRect(0, 0, canvas.width, canvas.height) })
+
+Turtle.prototype.rt = function(n) { this.turnBy(n)       }
+Turtle.prototype.lt = function(n) { this.turnBy(-n)      }
+Turtle.prototype.fd = function(n) { this.forwardBy(n)    }
+Turtle.prototype.bk = function(n) { this.forwardBy(-n)   }
+Turtle.prototype.pu = function()  { this.penDown = false }
+Turtle.prototype.pd = function()  { this.penDown = true  }
+Turtle.prototype["if"] = function(cond, block) { if (cond) block() }
+
+ometa LogoTranslator <: Parser {
+  name         = spaces <letter (letter | digit)*>,
+  cmdName      = name:n
+                   ?(n != 'to') ?(n != 'end') ?(n != 'output') -> n,
+  number       = spaces <digit+>,
+  arg          = ":" name,
+  cmds         = cmd*:xs                                       -> xs.delimWith(';').join(''),
+  block        = "[" cmds:xs "]"                               -> ('(function() {' + xs + '})'),
+  primExpr     = arg | number | block | "(" (expr | cmd):x ")" -> x,
+  mulExpr      = mulExpr:x "*" primExpr:y                      -> (x + '*' + y)
+               | mulExpr:x "/" primExpr:y                      -> (x + '/' + y)
+               | primExpr,
+  addExpr      = addExpr:x "+" mulExpr:y                       -> (x + '+' + y)
+               | addExpr:x "-" mulExpr:y                       -> (x + '-' + y)
+               | mulExpr,
+  relExpr      = addExpr:x "<"  addExpr:y                      -> (x + '<'  + y)
+               | addExpr:x "<=" addExpr:y                      -> (x + '<=' + y)
+               | addExpr:x ">"  addExpr:y                      -> (x + '>'  + y)
+               | addExpr:x ">=" addExpr:y                      -> (x + '>=' + y)
+               | addExpr,
+  expr         = relExpr,
+  cmd          = "output" expr:x                               -> ('return ' + x)
+               | cmdName:n expr*:args                          -> ('_this["' + n + '"].apply(_this, [' +
+                                                                       args.delimWith(',').join('') + '])'),
+  decl         = "to" cmdName:n arg*:args cmds:body  "end"     -> ('_this["' + n + '"]=function(' +
+                                                                       args.delimWith(',').join('') + '){' + body + '}'),
+  topLevelCmd  = decl | cmd,
+  topLevelCmds = topLevelCmd*:xs spaces end                    -> ('(function(){var _this=this;' +
+                                                                       xs.delimWith(',').join('') +
+                                                                       '}).apply(smiley)')
+}
+
+smiley = new Turtle()
+translateCode = function(code) {
+  return LogoTranslator.matchAll(code, "topLevelCmds")
+}
+
+
+
+
+to spiral :size :angle
+  if :size < 100 [
+    fd :size
+    rt :angle
+    spiral :size + 2 :angle
+  ]
+end
+
+spiral 0 60
+spiral 0 89
+spiral 100 90
+

@@ -1,0 +1,53 @@
+// since typechecking is usually syntax-directed, we can implement a typechecker as a recognizer
+
+ometa LittleTypechecker <: Parser {
+  typecheck = term:t spaces end                          -> t,
+  term      = "0"                                        -> "Int"
+            | "1"                                        -> "Int"
+            | "true"                                     -> "Bool"
+            | "false"                                    -> "Bool"
+            | "isZero" term:t
+                ?(t == "Int")                            -> "Bool"
+            | "if" term:t1 "then" term:t2 "else" term:t3
+                ?(t1 == "Bool")
+                ?(t2 == t3)                              -> t2
+}
+
+program = "
+           if isZero 1
+           then if true
+                then 0
+                else 1
+           else 1
+          "
+LittleTypechecker.matchAll(program, "typecheck")
+
+
+
+// we can also implement the above as a parser + typechecker combo
+
+ometa LittleParser <: Parser {
+  term    = "0"                                        -> 0
+          | "1"                                        -> 1
+          | "true"                                     -> true
+          | "false"                                    -> false
+          | "isZero" term:t                            -> [`isZero, t]
+          | "if" term:t1 "then" term:t2 "else" term:t3 -> [`if, t1, `then, t2, `else, t3],
+  program = term:t spaces end                          -> t
+}
+
+ometa LittleTypechecker {
+  type = 0                                         -> "Int"
+       | 1                                         -> "Int"
+       | true                                      -> "Bool"
+       | false                                     -> "Bool"
+       | [`isZero type:t]
+           ?(t == "Int")                           -> "Bool"
+       | [`if type:t1 `then type:t2 `else type:t3]
+           ?(t1 == "Bool")
+           ?(t2 == t3)                             -> t2 
+}
+
+ast = LittleParser.matchAll(program, "program")
+LittleTypechecker.match(ast, "type")
+

@@ -1,0 +1,247 @@
+// This is a virtual machine for running OMeta programs
+
+DefineConstructor = function(name) {
+  var s = name + " = function() { "
+  for (var idx = 1; idx < arguments.length; idx++)
+    s += "this." + arguments[idx] + " = arguments[" + (idx - 1) + "]; "
+  var r = eval(s + "}")
+  r.prototype.toString = function() {
+    var r = "[" + name
+    for (var p in this)
+      if (this.hasOwnProperty(p))
+        r += " " + p + "=" + this[p]
+    return r + "]"
+  }
+  return r
+}
+
+DefineConstructor("Cons", "car", "cdr")
+Cons.prototype.toString = function() {
+  var curr = this, r = "("
+  while (true) {
+    if (curr instanceof Cons) {
+      r += curr.car
+      curr = curr.cdr
+      if (curr == null)
+        break
+      r += " "
+    }
+    else {
+      r += " . " + curr
+      break
+    }
+  }
+  return r + ")"
+}
+Cons.fromList = function(l, idx) {
+  if (idx == undefined)
+    idx = 0
+  if (idx == l.length)
+    return null
+  return new Cons(l[idx], Cons.fromList(l, idx + 1))
+}
+
+DefineConstructor("Bindings")
+
+DefineConstructor("OrStackNode",  "input", "alt", "cont")
+OrStackNode.prototype.succeeded = function(m) {
+  m.code     = this.cont
+}
+OrStackNode.prototype.failed = function(m) {
+  m.input    = this.input
+  m.code     = new Cons(this.alt, this.cont)
+}
+
+DefineConstructor("ApplyStackNode", "bindings")
+ApplyStackNode.prototype.succeeded = function(m) {
+  m.bindings = this.bindings
+  m.code     = m.code.cdr
+}
+ApplyStackNode.prototype.failed = function(m) {
+  m.bindings = this.bindings
+}
+
+DefineConstructor("NotStackNode", "cont")
+NotStackNode.prototype.succeeded = function(m) {
+  m.code     = new Cons(new Failure(), null)
+}
+NotStackNode.prototype.failed = function(m) {
+  m.code     = this.cont
+}
+
+DefineConstructor("FormStackNode", "input", "cont")
+FormStackNode.prototype.succeeded = function(m) {
+  m.input    = this.input
+  m.code     = this.cont
+}
+FormStackNode.prototype.failed = function(m) {
+}
+
+// to improve performance, could get rid of And and make Cons (and null) know how to eval
+DefineConstructor("And", "x", "y")
+And.prototype.eval = function(m) {
+  m.code = new Cons(this.x, new Cons(this.y, m.code.cdr))
+}
+
+DefineConstructor("Or", "x", "y")
+Or.prototype.eval = function(m) {
+  m.stack = new Cons(new OrStackNode(m.input, this.y, m.code.cdr), m.stack)
+  m.code  = new Cons(this.x, new Cons(new Success(), null))
+}
+
+DefineConstructor("Success")
+Success.prototype.eval = function(m) {
+  m.stack.car.succeeded(m)
+  m.stack = m.stack.cdr
+}
+
+DefineConstructor("Failure")
+Failure.prototype.eval = function(m) {
+  m.stack.car.failed(m)
+  m.stack = m.stack.cdr
+}
+
+DefineConstructor("Consume")
+Consume.prototype.eval = function(m) {
+  if (m.input != null) {
+    m.ans   = m.input.car
+    m.input = m.input.cdr
+    m.code  = m.code.cdr
+  }
+  else if (!m._inputIsInteractive)
+    m.code = new Cons(new Failure(), null)
+}
+
+DefineConstructor("Apply", "rule")
+Apply.prototype.eval = function(m) {
+  m.stack    = new Cons(new ApplyStackNode(m.bindings), m.stack)
+  m.bindings = new Bindings()
+  m.code     = new Cons(m[this.rule], new Cons(new Success(), m.code.cdr))
+}
+
+DefineConstructor("ApplyWithArgs", "rule", "args")
+ApplyWithArgs.prototype.eval = function(m) {
+  for (var idx = this.args.length - 1; idx >= 0; idx--)
+    m.input = new Cons(this.args[idx], m.input)
+  m.code = new Cons(new Apply(this.rule), m.code.cdr)
+}
+
+DefineConstructor("DoIt", "func")
+DoIt.prototype.eval = function(m) {
+  m.ans  = (this.func)(m)
+  m.code = m.code.cdr
+}
+
+DefineConstructor("SemPred", "func")
+SemPred.prototype.eval = function(m) {
+  m.ans  = (this.func)(m)
+  m.code = m.ans ? m.code.cdr : new Cons(new Failure(), null)
+}
+
+DefineConstructor("Bind", "name")
+Bind.prototype.eval = function(m) {
+  m.bindings[this.name] = m.ans
+  m.code                = m.code.cdr
+}
+
+DefineConstructor("Not", "x")
+Not.prototype.eval = function(m) {
+  m.stack = new Cons(new NotStackNode(m.code.cdr), m.stack)
+  m.code  = new Cons(this.x, new Cons(new Success(), null))
+}
+
+DefineConstructor("Form", "x")
+Form.prototype.eval = function(m) {
+  m.stack = new Cons(new FormStackNode(m.input.cdr, m.code.cdr), m.stack)
+  m.input = m.input.car
+  m.code  = new Cons(and(new SemPred(function(m) { return m.input == null || m.input instanceof Cons }),
+                         this.x,
+                         new SemPred(function(m) { return m.input == null }),
+                         new Success()),
+                     null)
+}
+
+DefineConstructor("LookAhead", "x")
+LookAhead.prototype.eval = function(m) {
+  m.stack = new Cons(new FormStackNode(m.input, m.code.cdr), m.stack)
+  m.code  = new Cons(new And(this.x, new Success()), null)
+}
+
+// poor man's front-end
+and = function() { return andOrHelper(And, 0, arguments) }
+or  = function() { return andOrHelper(Or,  0, arguments) }
+And.defaultAction = new DoIt(function(m) { return true })
+Or.defaultAction  = new Failure()
+function andOrHelper(type, idx, args) {
+  if (idx == args.length)
+    return type.defaultAction
+  else if (idx == args.length - 1)
+    return args[idx]
+  else
+    return new type(args[idx], andOrHelper(type, idx + 1, args))
+}
+
+OMetaVM = {
+  _singleStep: function() {
+    if (this.code == null)
+      return
+    try { this.code.car.eval(this) }
+    catch (e) { throw "invalid instruction: " + this.code.car }
+  },
+  stack:    null,
+  ans:      null,
+  bindings: new Bindings(),
+  _:        new Consume(),
+  fail:     new Failure(),
+  succeed:  new DoIt(function() { return true }),
+  end:      new Not(new Apply("_")),
+  exactly:  and(new Apply("_"),
+                new Bind("wanted"),
+                new Apply("_"),
+                new Bind("got"),
+                new SemPred(function(m) { with (m.bindings) { return wanted == got } }),
+                new DoIt(function(m) { with (m.bindings) { return wanted } }))
+}
+
+OMetaVM.singleStep = function() {
+  if (this.code == null) {
+    alert("match successful")
+    return
+  }
+  if (this.code.car instanceof Failure && this.stack == null) {
+    alert("match failed")
+    return
+  }
+  this._singleStep()
+  this.printStatus()
+}
+OMetaVM.printStatus = function() {
+  Transcript.show("code     = " + this.code     + "\n" +
+                  "input    = " + this.input    + "\n" +
+                  "stack    = " + this.stack    + "\n" +
+                  "bindings = " + this.bindings + "\n" +
+                  "ans      = " + this.ans      + "\n")
+}
+
+// and now an example
+
+M = OMetaVM.delegated({
+  input1: Cons.fromList([1, 2, 3, 4]),
+  code1:  Cons.fromList([or(and(new Apply("_"), new Apply("_"), new Apply("_"), new Apply("_"), new Apply("_")),
+                            and(new Apply("_"), new Apply("_"), new Apply("_"),
+                                new DoIt(function(m) { return "option 2 worked" })))]),
+  code2:  Cons.fromList([new Not(new Apply("fail")),
+                         new DoIt(function(m) { return "bar" }),
+                         new Bind("foo"),
+                         new ApplyWithArgs("_", ["a", "b", "c"]),
+                         new Apply("_"),
+                         new ApplyWithArgs("exactly", "c")]),
+  input:  new Cons(Cons.fromList([1, 2]), null),
+  code3:  Cons.fromList([new Form(new And(new Apply("_"), new Apply("_"))), new Apply("end")]),
+  code:   Cons.fromList([new LookAhead(new Apply("_")), new Apply("_")])
+})
+
+// Now select the following line, press "do it", and see new state of the VM change in the transcript.
+// (Do it again and again until it's done maching the input.).
+M.singleStep()
+

@@ -1,0 +1,22 @@
+eval(readFile('Compiled_JavaScript_Compiler'))
+
+ometa EJSParser <: JSParser {
+  isKeyword :x = ?(x == 'say') | super(`isKeyword, x),
+  stmt         = "say" expr:x sc -> ["call", ["get", "alert"], x]
+              | super("stmt")
+}
+EJSParser.matchAll("if (true) say 1+1", "stmt")
+
+oldTranslateCode = translateCode
+
+translateCode = function(s) {
+  var tree = EJSParser.matchAll(s, "topLevel")
+  var code = JSTranslator.match(tree, "trans")
+  return code
+}
+
+// evaluate the next statement in a different "do-it" than the above
+say "hello world"
+
+translateCode = oldTranslateCode
+

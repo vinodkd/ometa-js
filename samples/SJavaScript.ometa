@@ -1,0 +1,16 @@
+eval(readFile('Compiled_JavaScript_Compiler'))
+
+ometa MyJSParser <: JSParser {
+  postfix     = primExpr:p spacesNoNl ("++"|"--"):op spacesNoNl number:n -> [`mypostop, op, n, p]
+              | super(`postfix)
+}
+
+tree = MyJSParser.matchAll("x--3", `topLevel)
+
+ometa MyJSTranslator <: JSTranslator {
+  mypostop   :op [`number :n] :x = ?(n==1) trans(x):x -> (x + op)
+                                 | ?(n>1)  mypostop(op, ["number", n - 1], x):m -> ('('+m+')'+op)
+}
+
+MyJSTranslator.match(tree, "trans")
+

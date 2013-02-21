@@ -1,0 +1,47 @@
+// readFile reads the source of an entire project into a string, so this is like a C-style include
+eval(readFile("Prolog_Library"))
+
+ometa ToylogTranslator {
+  rule   = clause:head "if" conj:body "."                                           -> new Rule(head, body)
+         | clause:head                "."                                           -> new Rule(head, []),
+  clause = !'':rel ![]:args !false:not
+             ( "not"                                 -> { not = !not }
+             | var:x                                 -> args.push(x)
+             | word:x 
+                 ( ?(x == 'isnT') -> { not = !not
+                                       x   = 'is' }
+                 | empty                           ) -> { rel += rel.length > 0 ?
+                                                                   x.capitalize()
+                                                                 : x              }
+             | thing:x                               -> args.push(x)
+             )+                                                                     -> { rel = new Sym(rel)
+                                                                                         rel = new Clause(rel, args)
+                                                                                         not ? new Clause(new Sym('not'), [rel])
+                                                                                             : rel                               },
+  var    = spaces lower+:xs !xs.join(''):ans
+             ?(ans == 'who' || ans == 'what' || ans == 'when' ||
+               ans.length == 1 && ans[0] != 'a')                                    -> new Var(ans),
+  word   = spaces ( <lower+>:x '\'' <lower+>:y                                      -> (x + y.capitalize())
+                  | <lower+>:ans
+                      ?(ans != 'if' && ans != 'not' && ans != 'and' && ans != 'or') -> ans
+                  | '\'' <lower+>:x                                                 -> x.capitalize()
+                  ),
+  thing  = spaces <upper lower*>:x                                                  -> new Sym(x),
+  conj   = listOf(`clause, 'and'),
+  prog     = (rule:r &clause -> r)*:rs clause:q "."                                 -> {rules: rs, query: q}
+}
+
+translateCode = function(x) {
+  var prog = ToylogTranslator.matchAll(x, "prog")
+  solve(prog.query, prog.rules)
+}
+
+
+Abe is Homer's father.
+Homer is Lisa's father.
+Homer is Bart's father.
+x is y's parent if x is y's father.
+x is y's parent if x is y's mother.
+x is y's grandfather if x is z's father and z is y's parent.
+
+x is y's grandfather.

@@ -1,0 +1,30 @@
+// readFile reads the source of an entire project into a string, so this is like a C-style include
+eval(readFile("Prolog_Library"))
+
+ometa PrologTranslator {
+  variable = spaces <upper (letter | digit)*>:name      -> new Var(name),
+  symbol   = spaces <lower (letter | digit)*>:name      -> new Sym(name),
+  clause   = symbol:sym "(" listOf(`expr, ','):args ")" -> new Clause(sym, args),
+  expr     = clause | variable | symbol,
+  clauses  = listOf(`clause, ','),
+  rule     = clause:head ":-" clauses:body "."          -> new Rule(head, body)
+           | clause:head                   "."          -> new Rule(head, []),
+  prog     = (rule:r &clause -> r)*:rs clause:q "."     -> {rules: rs, query: q}
+}
+translateCode = function(x) {
+  var prog = PrologTranslator.matchAll(x, "prog")
+  solve(prog.query, prog.rules)
+}
+
+// press 'Cancel' to see more solutions, and 'OK' if you've seen enough
+nat(z).
+nat(s(X)) :- nat(X).
+nat(X).
+
+father(abe, homer).
+father(homer, lisa).
+father(homer, bart).
+parent(X, Y) :- father(X, Y).
+parent(X, Y) :- mother(X, Y).
+grandfather(X, Y) :- father(X, Z), parent(Z, Y).
+grandfather(X, Y).

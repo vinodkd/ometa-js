@@ -1,0 +1,144 @@
+// This is a small PEG parser generator, which could be the starting point for an OMeta-like language...
+
+// back-end stuff (machinery for parsing)
+MetaToo = {
+  char:        function()      { if (this._input.length > this._pos) return this._input[this._pos++]
+                                 else                                throw "[fail]" },
+  _exactly:    function(x)     { if (this.char() == x) return x
+                                 else                  throw "[fail]" },
+  _not:        function(f)     { var p = this._pos
+                                 try { f() }
+                                 catch (_) { this._pos = p; return true }
+                                 throw "[fail]" },
+  _manyHelper: function(f, ans) { while (true) {
+                                    var p = this._pos
+                                    try { ans.push(f()) }
+                                    catch (_) { this._pos = p; return ans } } },
+  _many:       function(f)     { return this._manyHelper(f, []) },
+  _many1:      function(f)     { return this._manyHelper(f, [f()]) },
+  _pred:       function(x)     { if (!x) throw "[fail]" },
+  initialize:  function()      { },
+  matchAll:    function(cs, r) { var m = objectThatDelegatesTo(this, {_input: cs, _pos: 0})
+                                 m.initialize()
+                                 return m[r].apply(m) }
+}
+
+// this is an OMeta-like front-end
+ometa MetaTooTranslator {
+  grammar = listOf(#rule, ',') spaces end                   -> self.ans,
+  rule    = name:n "=" choices:cs                           -> { var f = '(function() { ' +
+                                                                            'var g = this, ls = {}, btPos = this._pos; ' +
+                                                                            cs +
+                                                                         '})'
+                                                                 self.ans[n] = eval(f)
+                                                                 n },
+  name    = spaces <letter letterOrDigit*>,
+  choices = choice:x "|" choices:y                          -> ('try { ' + x + ' } catch (_) { g._pos = btPos; ' + y + ' }')
+          | choice:x                                        -> x,
+  choice  = term*:ts ( "->" jsExpr:a                        -> { ts.push("return " + a);      ts.join(';') }
+                     |                                      -> { ts.push("return undefined"); ts.join(';') }
+                     ),
+  jsExpr  = "@" (~'@' char)*:xs '@'                         -> ('(function() { var _; with (ls) _=' +
+                                                                               xs.join('') + '; return _ }).apply(g)'),
+  term    = term1:v ":" name:n                              -> ('ls["' + n + '"] = ' + v)
+          | term1,
+  term1   = "~"  term0Fn:f                                  -> ('g._not('   + f + ')')
+          | "?"  jsExpr:e                                   -> ('g._pred('  + e + ')')
+          | term0Fn:f "*"                                   -> ('g._many('  + f + ')')
+          | term0Fn:f "+"                                   -> ('g._many1(' + f + ')')
+          | term0,
+  term0   = "'"  (~'\'' oneChar)*:cs '\''                   -> cs.join('; ')
+          | "\"" (~'"'  oneChar)*:cs '"'                    -> { cs.unshift('g.spaces()')
+                                                                 cs.join('; ') }
+          | name:x                                          -> ('g.' + x + '()')
+          | "(" choice:x ")"                                -> ('(function() { ' + x + '})()'),
+  term0Fn = term0:x                                         -> ('(function() { return ' + x + '})'),
+  oneChar = '\\' char:c                                     -> ('g._exactly(' + unescape('\\' + c).toProgramString() + ')')
+          | char:c                                          -> ('g._exactly(' + c.toProgramString() + ')')
+}
+MetaTooTranslator.initialize = function() { this.ans = objectThatDelegatesTo(MetaToo) }
+
+
+// first, a little example to see if this works
+
+littleExample = """
+  end      = ~char,
+  space    = char:s ?@s.charCodeAt(0) <= 32@        -> @s@,
+  spaces   = space*:ss                              -> @ss@,
+
+  expr     = addExpr:x                              -> @x@,
+  addExpr  = mulExpr:x  ("+" mulExpr:y  -> @y@)+:ys -> @['plus'].concat([x], ys)@
+           | mulExpr:x                              -> @x@,
+  mulExpr  = primExpr:x ("*" primExpr:y -> @y@)+:ys -> @['times'].concat([x], ys)@
+           | primExpr:x                             -> @x@,
+  primExpr = number:x                               -> @x@
+           | "(" expr:x ")"                         -> @x@,
+  number   = spaces digit+:ds                       -> @['number', parseInt(ds.join(''))]@,
+  digit    = char:d ?@d >= "0" && d <= "9"@         -> @d@
+"""
+
+g = MetaTooTranslator.matchAll(littleExample, "grammar")
+g.matchAll("6 * (4 +3 )", "expr")
+
+
+// and now a more interesting example: the MetaToo translator in itself, to complete the process of bootstrapping
+
+MetaTooTranslatorInItself = """
+  end     = ~char,
+  space    = char:s ?@s.charCodeAt(0) <= 32@        -> @s@,
+  spaces  = space*:ss                               -> @ss@,
+  upper   = char:u ?@u >= "A" && u <= "Z"@          -> @u@,
+  lower   = char:l ?@l >= "a" && l <= "z"@          -> @l@,
+  letter  = upper:u                                 -> @u@
+          | lower:l                                 -> @l@,
+  digit   = char:d ?@d >= "0" && d <= "9"@          -> @d@,
+  alnum   = letter:l                                -> @l@
+          | digit:d                                 -> @d@,
+
+  grammar = rule ("," rule)* spaces end             -> @g.ans@,
+  rule    = name:n "=" choices:cs                   -> @(function() {
+                                                         var f = '(function() { ' +
+                                                                    'var g = this, ls = {}, btPos = this._pos; ' +
+                                                                    cs +
+                                                                 '})'
+                                                         g.ans[n] = eval(f)
+                                                         return n
+                                                       })()@,
+  name    = spaces letter:x alnum*:xs               -> @[x].concat(xs).join('')@,
+  choices = choice:x "|" choices:y                  -> @'try { ' + x + ' } catch (_) { g._pos = btPos; ' + y + ' }'@
+          | choice:x                                -> @x@,
+  choice  = term*:ts "->" jsExpr:a                  -> @ts.concat(["return " + a     ]).join(';')@
+          | term*:ts                                -> @ts.concat(["return undefined"]).join(';')@,
+  jsExpr  = "@" (~'@' char:x -> @x@)*:xs '@'        -> @'(function() { var _; with (ls) _=' +
+                                                                       xs.join('') + '; return _ }).apply(g)'@,
+  term    = term1:v ":" name:n                       -> @'ls["' + n + '"] = ' + v@
+          | term1:v                                 -> @v@,
+  term1   = "~"  term0Fn:f                          -> @'g._not('   + f + ')'@
+          | "?"  jsExpr:e                           -> @'g._pred('  + e + ')'@
+          | term0Fn:f "*"                           -> @'g._many('  + f + ')'@
+          | term0Fn:f "+"                           -> @'g._many1(' + f + ')'@
+          | term0:t                                 -> @t@,
+  term0   = "'"   (~'\'' oneChar:c -> @c@)*:cs '\'' -> @cs.join('; ')@
+          | "\"" (~'"'   oneChar:c -> @c@)*:cs '"'  -> @["g.spaces()"].concat(cs).join('; ')@
+          | name:x                                  -> @'g.' + x + '()'@
+          | "(" choice:x ")"                        -> @'(function() { ' + x + '})()'@,
+  term0Fn = term0:x                                 -> @'(function() { return ' + x + '})'@,
+  oneChar = '\\' char:c                             -> @'g._exactly(' + unescape('\\' + c).toProgramString() + ')'@
+          | char:c                                  -> @'g._exactly(' + c.toProgramString() + ')'@
+"""
+
+NewMetaTooTranslator = MetaTooTranslator.matchAll(MetaTooTranslatorInItself, "grammar")
+NewMetaTooTranslator.initialize = function() { this.ans = objectThatDelegatesTo(MetaToo) }
+
+g = NewMetaTooTranslator.matchAll(littleExample, "grammar")
+g.matchAll("6 * (4 +3 )", "expr")
+
+
+// and now really test this thing
+
+NewNewMetaTooTranslator = NewMetaTooTranslator.matchAll(MetaTooTranslatorInItself, "grammar")
+NewNewMetaTooTranslator.initialize = function() { this.ans = objectThatDelegatesTo(MetaToo) }
+
+g = NewNewMetaTooTranslator.matchAll(littleExample, "grammar")
+g.matchAll("6 * (4 +3 )", "expr")
+

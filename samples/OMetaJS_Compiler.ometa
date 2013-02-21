@@ -1,0 +1,11 @@
+// language mash-ups are very useful; here's an example from the OMeta/JS implementation
+
+ometa OMetaJSParser <: BSJSParser {
+  srcElem = spaces foreign(BSOMetaParser, `grammar):r sc -> r
+          | super(`srcElem)
+}
+
+ometa OMetaJSTranslator <: BSJSTranslator {
+  Grammar = foreign(BSOMetaTranslator, `Grammar)
+}
+

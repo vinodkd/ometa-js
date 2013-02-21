@@ -1,0 +1,39 @@
+ometa NullOptimization {
+  setHelped = !(self._didSomething = true),
+  helped    = ?self._didSomething,
+  trans     = [:t ?(self[t] != null) apply(t):ans] -> ans
+            | anything,
+  optimize  = trans:x helped     -> x,
+
+  Or        trans*:xs            -> [`Or].concat(xs),
+  And       trans*:xs            -> [`And].concat(xs),
+  Many      trans:x              -> [`Many,      x],
+  Many1     trans:x              -> [`Many1,     x],
+  Set       :n trans:v           -> [`Set,       n, v],
+  Not       trans:x              -> [`Not,       x],
+  Lookahead trans:x              -> [`Lookahead, x],
+  Form      trans:x              -> [`Form,      x],
+  Rule      :name :ls trans:body -> [`Rule,      name, ls, body]
+}
+
+NullOptimization.initialize = function() { this._didSomething = false }
+
+ometa AndOrOptimization <: NullOptimization {
+  And trans:x end          setHelped -> x,
+  And transInside(#And):xs           -> [`And].concat(xs),
+  Or  trans:x end          setHelped -> x,
+  Or  transInside(#Or):xs            -> [`Or].concat(xs),
+
+  transInside :t = [exactly(t) transInside(t):xs] transInside(t):ys setHelped -> xs.concat(ys)
+                 | trans:x                        transInside(t):xs           -> [x].concat(xs)
+                 |                                                            -> []
+}
+
+ometa OMetaOptimizer {
+  optimizeGrammar = [`Grammar :n :sn optimizeRule*:rs]         -> [`Grammar, n, sn].concat(rs),
+  optimizeRule    = :r (AndOrOptimization.optimize(r):r)* -> r
+}
+
+g = [`Grammar, "X", "OMeta", [`Rule, "r", [], [`Or, [`Or, [`App, "p1"], [`App, "p2"]], [`App, "p3"]]]]
+OMetaOptimizer.match(g, "optimizeGrammar")
+
