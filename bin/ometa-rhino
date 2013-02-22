@@ -7,4 +7,13 @@ then
 	exit -1
 fi
 
+# check repeated here on the chance that ometa-rhino is called directly
+
+if [ "$OMETAJS_HOME" == "" ]
+then
+	echo Need the location of OmetaJS Installation to continue.
+	echo Set \$OMETAJS_HOME to that location \(minus the trailing slash\).
+	exit -2
+fi
+
 java -cp $RHINO_HOME/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_HOME/bin/ometa-rhino.js "$OMETAJS_HOME/" $@
