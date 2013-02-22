@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 
-if [ "$RHINO_INSTALL_DIR" == "" ]
+if [ "$RHINO_HOME" == "" ]
 then
 	echo Need the location of Rhino Installation to continue.
-	echo Install Rhino and set \$RHINO_INSTALL_DIR to that location
+	echo Install Rhino and set \$RHINO_HOME to that location
 	exit -1
 fi
 
-java -cp $RHINO_INSTALL_DIR/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_INSTALL_DIR/bin/ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@
+java -cp $RHINO_HOME/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_INSTALL_DIR/bin/ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@

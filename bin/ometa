@@ -8,10 +8,10 @@ then
 	export OMETAJS_RUNTIME=rhino
 fi
 
-if [ "$OMETAJS_INSTALL_DIR" == "" ]
+if [ "$OMETAJS_HOME" == "" ]
 then
 	echo Need the location of OmetaJS Installation to continue.
-	echo Set \$OMETAJS_INSTALL_DIR to that location \(minus the trailing slash\).
+	echo Set \$OMETAJS_HOME to that location \(minus the trailing slash\).
 	exit -1
 fi
 
