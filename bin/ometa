@@ -21,4 +21,4 @@ then
 	exit -2
 fi
 
-$OMETAJS_INSTALL_DIR/bin/ometa-$OMETAJS_RUNTIME $@
+$OMETAJS_HOME/bin/ometa-$OMETAJS_RUNTIME $@

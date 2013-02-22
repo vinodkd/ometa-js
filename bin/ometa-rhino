@@ -7,4 +7,4 @@ then
 	exit -1
 fi
 
-java -cp $RHINO_HOME/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_INSTALL_DIR/bin/ometa-rhino.js "$OMETAJS_INSTALL_DIR/" $@
+java -cp $RHINO_HOME/js.jar org.mozilla.javascript.tools.shell.Main $OMETAJS_HOME/bin/ometa-rhino.js "$OMETAJS_HOME/" $@
