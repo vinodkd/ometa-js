@@ -61,13 +61,12 @@ FINALLY GOT IT WORKING BY MANUALLY CHANGING ONE.BSC: NEED TO SAVE THE OBJECT AS 
 BEST BET: USE JSON
 */
 var grammar  = readFile(arguments[1]);
-var compiler = readFile("/Users/vinodkd/projects/betterscript/bsc.ometa");
 var rule     = arguments[2];
 var srcType  = arguments[3];
 var srcTxt   = readFile(arguments[4]);
 // alert(srcTxt);
 
-var langtoolchain = translateCode(grammar + "\n" + compiler);
+var langtoolchain = translateCode(grammar);
 eval(langtoolchain);
 
 // really kludge-y way of getting the parser's name.
