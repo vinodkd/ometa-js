@@ -15,9 +15,9 @@ then
 	exit -1
 fi
 
-if [ $# -ne 3  ]
+if [ $# -ne 4  ]
 then
-	echo Usage: `basename $0` grammar.ometajs rule sourcefile
+	echo "Usage: `basename $0` grammar.ometajs rule source|tree sourcefile"
 	exit -2
 fi
 
