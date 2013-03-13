@@ -44,27 +44,10 @@ translateCode = function(s) {
   return BSOMetaJSTranslator.match(tree, "trans", undefined, matchFailed)
 }
 
-/* 
-This whoel section is under construction
-The idea was to take omet-rhino.js from betterscript and convert it into a generic one-step processor:
-parse would be one step, compile would be another; which is currently combined in betterscript/ometa-rhino.
-however, when i split the two, the parse seems to work fine, but the compile refuses to accept the output of the parse step
-i've narrowed it down to this: if both the parse and compile are in the same session, the compile works.
-splitting them up requires writing the output to file and reading it back. something is going on there.
-
-when i figure it out, all hardcoded refs shoudl be removed, as should all the srctype elvises.
-even better: figure out how to use createInstance.
-
-idea: eval the source when its an object.
-its almost working but there's issues in the eval 
-FINALLY GOT IT WORKING BY MANUALLY CHANGING ONE.BSC: NEED TO SAVE THE OBJECT AS A REPARSEABLE OBJECT.
-BEST BET: USE JSON
-*/
 var grammar  = readFile(arguments[1]);
 var rule     = arguments[2];
 var srcType  = arguments[3];
 var srcTxt   = readFile(arguments[4]);
-// alert(srcTxt);
 
 var langtoolchain = translateCode(grammar);
 eval(langtoolchain);
@@ -77,19 +60,11 @@ var fnToCall = srcType == "source" ? "matchAll" : "match";
 var src;
 (srcType == "source") ? src = srcTxt : eval('src = ' + srcTxt +';');
 
-// alert(fnToCall);
-//alert(src);
-//alert("tree = " + ometaObj + "." + fnToCall + "(src,rule,undefined,matchFailed)");
 eval("tree = " + ometaObj + "." + fnToCall + "(src,rule,undefined,matchFailed)");
-//var tree = BSCompiler.match(src,rule,undefined,matchFailed);
+
+// the stringify is needed if the output is to be fed back into ometa. 
+// normal output results in the object becoming an un-eval-able string.
+// output in json format resolves that issue.
+// note that the assumption here is that string input => ast output and vice versa.
+
 alert((srcType == "source") ? JSON.stringify(tree) : tree );
-
-// var ast = BSParser.matchAll(src,"compilationUnit");
-// alert(ast);
-// var bsc = readFile("/Users/vinodkd/projects/betterscript/one.bsc");
-// alert("printing file output");
-// alert(bsc);
-// alert("ast done. now compiling\n");
-
-// var code = BSCompiler.match(ast, "ast");
-// alert(code);
