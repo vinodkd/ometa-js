@@ -71,10 +71,7 @@ eval(langtoolchain);
 
 // really kludge-y way of getting the parser's name.
 // todo: figure out how to use omet-base.js's createInstance instead
-// var ometaObj = langtoolchain.substr(0,langtoolchain.indexOf("="));
-//alert(langtoolchain);
-//alert(ometaObj);
-var ometaObj = srcType == "source" ? "BSParser" : "BSCompiler";
+var ometaObj = langtoolchain.substr(0,langtoolchain.indexOf("="));
 var fnToCall = srcType == "source" ? "matchAll" : "match";
 
 var src;
@@ -83,7 +80,7 @@ var src;
 // alert(fnToCall);
 //alert(src);
 //alert("tree = " + ometaObj + "." + fnToCall + "(src,rule,undefined,matchFailed)");
-eval("tree = " + ometaObj + "." + fnToCall + "(src,rule);"); //,undefined,matchFailed)");
+eval("tree = " + ometaObj + "." + fnToCall + "(src,rule,undefined,matchFailed)");
 //var tree = BSCompiler.match(src,rule,undefined,matchFailed);
 alert((srcType == "source") ? JSON.stringify(tree) : tree );
 
