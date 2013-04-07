@@ -8,7 +8,6 @@
     <script src="../../lib/bs-ometa-compiler.js"></script>
     <script src="../../lib/bs-ometa-optimizer.js"></script>
     <script src="../../lib/bs-ometa-js-compiler.js"></script>
-    <script src="../../lib/ometa-script-tag.js"></script>
 
     <script type="text/x-ometa-js">
       // Inspired by McCarthy's meta-circular lisp
@@ -38,17 +37,34 @@
       }
       Lisp.initialize = function() { this.env = {car: "car", cdr: "cdr", cons: "cons", atom: "atom", eq: "eq", nil: null, T: "T"} }
       lispEval = function(x) { console.log(Lisp.match(x, "ev")) }
-
-      lispEval([`quote, [1, 2, 3]])
-      lispEval([`car, [`quote, [1, 2, 3]]])
-      lispEval([`cdr, [`quote, [1, 2, 3]]])
-      lispEval([`cons, [`quote, `x], [`quote, `y]])
-      lispEval([`eq, [`quote, `x], [`quote, `x]])
-      lispEval([[`lambda, [`x], [`cons, `x, `x]], [`quote, `boo]])
-
+      lispEval([`quote, [2, 3, 4]])
     </script>
+    <!-- 
+      This is the version of standalone that actually works in a real scenario. As it existed, standalone.html used the ometa-script-tag.js to paste in a grammar as is into a script tag with its own custom type. While there is code to work with an existing window.onload, it really isnt geared towards a real world scenario like:
+        - other libs being loaded
+        - other script tags introducing onload functions, which ometa-script-tag.js is hoping to catch. this can happen only if it is the last script to be loaded!
+        - the need to run the scanner after the page has been loaded, not during. this requires separating the code that calls match() or matchAll() from the code that defines the grammar. when we do this - especially by moving it to another script tag, it immediately becomes subject to parsing by the javascript parser at page load time and ometa-js' extensions to syntax are not available. therefore any samples that rely on such extensions in syntax must be rewritten to comply with js syntax or wrapped in aother eval.
 
-  <body>
+      So, in this version:
+        - the head element finally has a close tag
+        - ometa-script-tag.js has to be the absolutely last thing to be loaded. If using the body element's onload attribute, it must be loaded after the body element itself has loaded (as is currently in this file). Alternatively, it could be the last script tag before body if there's a script just above setting window.onload with an closure just above.
+        - grammar definition alone is in its 'text/x-ometa-js' typed script element
+        - use of the grammar is in a separate  onload function called by window.onload. all calls to the grammar evaluator (lispEval and Lisp in this case) must be in valid js syntax.
+    -->
+    <script type="text/javascript">
+      function init() {
+        console.log("loaded" + lispEval + Lisp)
+        lispEval(['quote', [1, 2, 3]])
+        lispEval(['car', ['quote', [1, 2, 3]]])
+        lispEval(['cdr', ['quote', [1, 2, 3]]])
+        lispEval(['cons', ['quote', 'x'], ['quote', 'y']])
+        lispEval(['eq', ['quote', 'x'], ['quote', 'x']])
+        lispEval([['lambda', ['x'], ['cons', 'x', 'x']], ['quote', 'boo']])
+      }
+    </script>
+  </head>
+  <body onload = "init();">
     hello world
   </body>
+  <script src="../../lib/ometa-script-tag.js"></script>
 </html>
