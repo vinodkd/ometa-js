@@ -30,7 +30,7 @@ Status
 
 - Reorganized files into:
 	- `bin`: containing the launchers; one each for Rhino, v8 and node.
-		- `bin/web`: containing the original web version of OMetaJS. Most probably doesnt work now.
+		- `bin/web`: containing the original web version of OMetaJS. Works with the new dir structure. Lisp sample tested out.
 	- `doc`: containing the original documents from Alex
 	- `lib`: containing the original source. In typical scripting language fashion the source code is contained in `lib`
 	- `src`: containing the original v8 plugin source
