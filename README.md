@@ -20,7 +20,7 @@ I looked at the current forks of OMetaJS on github before deciding to fork the o
 My fork is primarily to make OMetaJS easier to use for language projects; not necessarily to change OMetaJS itself. 
 
 Caveats
--------
+--------
 
 - I'm moving files first, adding grammars and making the rhino distro - in that order. Bits of the original OMetaJS codebase (like Worlds or the Workspace) might not work while I'm doing this.
 - Not all grammars from the OMetaJS website have been copied over; only those that I thought would be relevant to using OMetaJS to build my own grammars. Also, the files are a point-in-time snapshot and may not work in practice. As I try to use these grammars in creating my own, I might go back to the older versions if the snapshot versions are broken.
